@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Chấm Công Theo Công Đoạn — V2</title>
+  <style>
+    :root {
+      --bg: #f4f3ef;
+      --card-bg: #ffffff;
+      --text: #211f1c;
+      --muted: #6e6b63;
+      --border: #e2e0d8;
+      --primary: #1e3a8a;
+      --primary-light: #eff6ff;
+      --accent: #d97706;
+      --accent-light: #fef3c7;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --shadow: 0 4px 12px rgba(0,0,0,0.05);
+      --radius: 12px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-bottom: 40px;
+    }
+    header {
+      background: #1e293b;
+      color: #fff;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+    header h1 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .header-actions { display: flex; gap: 8px; }
+    .btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-outline { background: transparent; border-color: #cbd5e1; color: #fff; }
+    .btn-outline:hover { background: rgba(255,255,255,0.1); }
+    .btn-sm { padding: 4px 8px; font-size: 12px; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    
+    .nav-tabs {
+      display: flex;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 0 16px;
+      overflow-x: auto;
+    }
+    .nav-tab {
+      padding: 12px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+    }
+    .nav-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .container { max-width: 1200px; margin: 20px auto; padding: 0 16px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .card-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+
+    /* Form Styles */
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--muted); }
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+      outline: none;
+    }
+    .form-control:focus { border-color: var(--primary); }
+
+    /* Chips */
+    .chips-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .chip {
+      padding: 8px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s;
+    }
+    .chip.selected {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    /* Roster Table */
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+    th { background: #f8fafc; font-weight: 600; color: var(--muted); }
+
+    /* Overview Matrix Table */
+    .ov-cell { text-align: center; font-size: 11px; cursor: pointer; padding: 4px; font-weight: bold; }
+    .ov-cell.weekend { background: #eceae0; }
+    .ov-name-col { position: sticky; left: 0; background: #fff; z-index: 2; width: 140px; min-width: 140px; }
+    .ov-summary { font-weight: bold; text-align: center; }
+
+    /* Mini Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .mini-stat { background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border); }
+    .mini-stat span { display: block; font-size: 12px; color: var(--muted); }
+    .mini-stat b { font-size: 18px; color: var(--text); }
+
+    /* Image Viewer */
+    .img-viewer-controls { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+    .img-container-wrapper { overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: #000; height: 500px; position: relative; }
+    .img-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; transition: transform 0.1s ease-out; }
+    .img-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 20px; right: 20px; background: #333; color: #fff;
+      padding: 10px 18px; border-radius: 8px; font-size: 13px; z-index: 1000;
+      display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    #fatalErrorBanner {
+      display: none; background: var(--danger); color: #fff; padding: 10px; text-align: center; font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div id="fatalErrorBanner">Lỗi khởi tạo: <span id="fatalErrorMsg"></span></div>
+
+<header>
+  <h1>📋 Chấm Công Công Đoạn <small style="font-size: 12px; opacity: 0.8;">V2</small></h1>
+  <div class="header-actions">
+    <button class="btn btn-outline btn-sm" id="btnBackup">💾 Sao lưu</button>
+    <button class="btn btn-outline btn-sm" id="btnRestore">📂 Phục hồi</button>
+    <input type="file" id="restoreFileInput" style="display:none" accept=".json">
+  </div>
+</header>
+
+<div class="nav-tabs">
+  <button class="nav-tab active" onclick="switchTab('entry')">✏️ Chấm công</button>
+  <button class="nav-tab" onclick="switchTab('journal')">📖 Nhật ký</button>
+  <button class="nav-tab" onclick="switchTab('stats')">📊 Thống kê</button>
+  <button class="nav-tab" onclick="switchTab('overview')">🗓️ Tổng quan (162)</button>
+  <button class="nav-tab" onclick="switchTab('photos')">📷 Kế hoạch</button>
+</div>
+
+<div class="container">
+  <!-- TAB 1: CHẤM CÔNG -->
+  <div id="tab-entry" class="tab-content active">
+    <div class="card">
+      <div class="card-title">Thiết lập Chấm Công</div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+        <div class="form-group">
+          <label>Ngày làm việc</label>
+          <input type="text" id="workDateDisplay" class="form-control" readonly style="background:#f1f5f9; cursor:pointer;">
+          <input type="date" id="workDateHidden" style="display:none;">
+        </div>
+        <div class="form-group">
+          <label>Ca làm việc</label>
+          <div class="chips-grid" id="shiftChips"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Công đoạn hiện tại</label>
+        <div id="currentStageBox" style="font-weight:bold; font-size:16px; color:var(--primary); margin-bottom:8px;">—</div>
+        <button class="btn btn-outline btn-sm" style="color:var(--text); border-color:var(--border);" onclick="switchTab('stats')">⚙️ Chọn/Quản lý Công đoạn</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>Danh sách Nhân sự (162)</span>
+        <button class="btn btn-primary btn-sm" id="btnSubmitBatch">Lưu Chấm Công</button>
+      </div>
+      <div class="form-group">
+        <input type="text" id="empSearch" class="form-control" placeholder="Tìm tên hoặc mã nhân viên...">
+      </div>
+      <div id="empListGrid" class="chips-grid" style="max-height: 400px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: NHẬT KÝ -->
+  <div id="tab-journal" class="tab-content">
+    <div class="card">
+      <div class="card-title">Nhật Ký Chấm Công</div>
+      <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+        <input type="date" id="recordDateFilter" class="form-control" style="width:auto;">
+        <input type="text" id="recordSearch" class="form-control" placeholder="Tìm theo tên/mã..." style="width:200px;">
+        <button class="btn btn-outline btn-sm" style="color:var(--text); border-color:var(--border);" onclick="clearJournalFilters()">Xóa lọc</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Ngày</th>
+              <th>Mã NV</th>
+              <th>Họ & Tên</th>
+              <th>Ca</th>
+              <th>Công đoạn</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="journalTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: THỐNG KÊ -->
+  <div id="tab-stats" class="tab-content">
+    <div class="card">
+      <div class="card-title">Quản Lý Công Đoạn</div>
+      <div class="chips-grid" id="stageChips"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Thống Kê Tổng Quan Nhân Sự</div>
+      <div class="form-group">
+        <input type="text" id="rosterSearch" class="form-control" placeholder="Lọc danh sách nhân sự...">
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>STT</th>
+              <th>Nhân viên</th>
+              <th>Phân bổ Ca làm</th>
+              <th>Tổng lượt</th>
+            </tr>
+          </thead>
+          <tbody id="rosterTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: TỔNG QUAN MATRIX -->
+  <div id="tab-overview" class="tab-content">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="btn btn-outline btn-sm" style="color:var(--text); border-color:var(--border);" id="ovPrevMonth">◀</button>
+          <span id="ovMonthLabel" style="font-weight:bold; font-size:16px;">Tháng --/----</span>
+          <button class="btn btn-outline btn-sm" style="color:var(--text); border-color:var(--border);" id="ovNextMonth">▶</button>
+          <button class="btn btn-outline btn-sm" style="color:var(--text); border-color:var(--border);" id="ovTodayBtn">Hôm nay</button>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="ovSearch" class="form-control" placeholder="Tìm NV..." style="width:150px;">
+          <select id="ovFilterMode" class="form-control" style="width:auto;">
+            <option value="all">Tất cả</option>
+            <option value="onleave">Có nghỉ</option>
+            <option value="noentry">Chưa chấm</option>
+          </select>
+        </div>
+      </div>
+      
+      <div id="overviewSummary" class="stats-grid"></div>
+      <div id="overviewLegend" class="chips-grid" style="margin-bottom:12px; font-size:12px;"></div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr id="overviewHeadRow"></tr>
+          </thead>
+          <tbody id="overviewBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: ẢNH KẾ HOẠCH -->
+  <div id="tab-photos" class="tab-content">
+    <div class="card">
+      <div class="card-title">Sơ Đồ / Kế Hoạch Làm Việc</div>
+      <div class="chips-grid" id="dayTabs"></div>
+      <div class="img-viewer-controls">
+        <input type="file" id="imgUploadInput" accept="image/*" style="display:none;">
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('imgUploadInput').click()">Tải ảnh lên</button>
+        <button class="btn btn-danger btn-sm" id="btnDeleteImg">Xóa ảnh</button>
+        <div style="margin-left:auto; display:flex; gap:4px; align-items:center;">
+          <button class="btn btn-outline btn-sm" style="color:var(--text); border-color:var(--border);" id="btnZoomOut">➖</button>
+          <span id="zoomVal" style="font-size:12px; font-weight:bold; width:40px; text-align:center;">100%</span>
+          <button class="btn btn-outline btn-sm" style="color:var(--text); border-color:var(--border);" id="btnZoomIn">➕</button>
+          <button class="btn btn-outline btn-sm" style="color:var(--text); border-color:var(--border);" id="btnZoomReset">Reset</button>
+        </div>
+      </div>
+      <div class="img-container-wrapper">
+        <div class="img-container" id="imgContainer">
+          <img id="activeDayImage" src="" alt="" style="display:none;">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ================= PHẦN DỮ LIỆU & BIẾN CƠ BẢN =================
+const LEAVE_SHIFT = 'Nghỉ/Ốm';
+const SHIFT_LIST_ALL = ['Ca 1', 'Ca 2', 'Ca 3', 'Hành chính', 'Tăng cường', LEAVE_SHIFT];
+const SHIFT_ABBR = { 'Ca 1': 'C1', 'Ca 2': 'C2', 'Ca 3': 'C3', 'Hành chính': 'HC', 'Tăng cường': 'TC', 'Nghỉ/Ốm': 'N' };
+const SHIFT_COLORS = { 'Ca 1': '#2563eb', 'Ca 2': '#d97706', 'Ca 3': '#7c3aed', 'Hành chính': '#059669', 'Tăng cường': '#dc2626', 'Nghỉ/Ốm': '#6b7280' };
+const SHIFT_BG = { 'Ca 1': '#dbeafe', 'Ca 2': '#fef3c7', 'Ca 3': '#ede9fe', 'Hành chính': '#d1fae5', 'Tăng cường': '#fee2e2', 'Nghỉ/Ốm': '#f3f4f6' };
+
+// Tự động tạo 162 Nhân Sự mẫu
+const EMPLOYEES = Array.from({ length: 162 }, (_, i) => {
+  const id = String(i + 1).padStart(3, '0');
+  return { code: `NV${id}`, short: `Nhiên sự ${id}`, full: `Nguyễn Văn ${id}` };
+});
+
+const DEFAULT_STAGES = ['Công đoạn A', 'Công đoạn B', 'Công đoạn C', 'Công đoạn D'];
+
+let state = {
+  records: [],
+  customStages: [...DEFAULT_STAGES],
+  currentStage: DEFAULT_STAGES[0],
+  selectedShift: SHIFT_LIST_ALL[0],
+  selectedEmps: new Set(),
+  activeDay: 1,
+  dayImages: {},
+  currentZoom: 100,
+  panX: 0, panY: 0,
+  ovYear: null, ovMonth: null,
+  activeTab: 'entry'
+};
+
+// ================= HÀM TIỆN ÍCH =================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2500);
+}
+
+function normalize(str) {
+  return (str || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+function todayISO() {
+  const d = new Date();
+  return isoOf(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function isoOf(y, mIdx, d) {
+  const mm = String(mIdx + 1).padStart(2, '0');
+  const dd = String(d).padStart(2, '0');
+  return `${y}-${mm}-${dd}`;
+}
+
+function fmtDate(isoStr) {
+  if(!isoStr) return '';
+  const parts = isoStr.split('-');
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+function shiftAbbrev(s) { return SHIFT_ABBR[s] || s; }
+
+function saveRecords() { localStorage.setItem('cc_records_v2', JSON.stringify(state.records)); }
+function saveStages() { localStorage.setItem('cc_stages_v2', JSON.stringify(state.customStages)); }
+function saveImages() { localStorage.setItem('cc_images_v2', JSON.stringify(state.dayImages)); }
+
+function loadState() {
+  try {
+    const rec = localStorage.getItem('cc_records_v2');
+    if(rec) state.records = JSON.parse(rec);
+    const stg = localStorage.getItem('cc_stages_v2');
+    if(stg) state.customStages = JSON.parse(stg);
+    const img = localStorage.getItem('cc_images_v2');
+    if(img) state.dayImages = JSON.parse(img);
+  } catch(e) { console.error('Lỗi load state:', e); }
+}
+
+function customConfirm(msg) { return Promise.resolve(confirm(msg)); }
+function customAlert(msg) { alert(msg); }
+
+// ================= CHUYỂN TAB & GIAO DIỆN =================
+function switchTab(tabId) {
+  state.activeTab = tabId;
+  document.querySelectorAll('.nav-tab').forEach((b, i) => {
+    const tNames = ['entry', 'journal', 'stats', 'overview', 'photos'];
+    b.classList.toggle('active', tNames[i] === tabId);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(`tab-${tabId}`).classList.add('active');
+
+  if(tabId === 'journal') renderRecords();
+  if(tabId === 'stats') renderAnalytics();
+  if(tabId === 'overview') renderOverview();
+  if(tabId === 'photos') updateImageViewer();
+}
+
+function updateTopDateChip() {
+  document.getElementById('workDateDisplay').value = fmtDate(document.getElementById('workDateHidden').value);
+}
+
+// ================= RENDER CÁC THÀNH PHẦN =================
+function renderShiftChips() {
+  const container = document.getElementById('shiftChips');
+  container.innerHTML = SHIFT_LIST_ALL.map(s => 
+    `<div class="chip ${s === state.selectedShift ? 'selected' : ''}" onclick="selectShift('${s}')">${s}</div>`
+  ).join('');
+}
+
+function selectShift(s) {
+  state.selectedShift = s;
+  renderShiftChips();
+}
+
+function renderCurrentStage() {
+  document.getElementById('currentStageBox').textContent = state.currentStage || 'Chưa chọn';
+}
+
+function renderEmpList() {
+  const grid = document.getElementById('empListGrid');
+  const q = normalize(document.getElementById('empSearch').value.trim());
+  
+  grid.innerHTML = EMPLOYEES.filter(emp => {
+    if(!q) return true;
+    return normalize(emp.short).includes(q) || normalize(emp.full).includes(q) || normalize(emp.code).includes(q);
+  }).map(emp => {
+    const isSelected = state.selectedEmps.has(emp.code);
+    return `<div class="chip ${isSelected ? 'selected' : ''}" onclick="toggleEmp('${emp.code}')">${emp.short} (${emp.code})</div>`;
+  }).join('');
+}
+
+document.getElementById('empSearch').addEventListener('input', renderEmpList);
+
+function toggleEmp(code) {
+  if(state.selectedEmps.has(code)) state.selectedEmps.delete(code);
+  else state.selectedEmps.add(code);
+  renderEmpList();
+}
+
+// LƯU BẢN CHẤM CÔNG HÀNG LOẠT
+document.getElementById('btnSubmitBatch').onclick = () => {
+  if(state.selectedEmps.size === 0) { showToast('Vui lòng chọn ít nhất 1 nhân sự!'); return; }
+  const date = document.getElementById('workDateHidden').value;
+  const shift = state.selectedShift;
+  const stage = state.currentStage;
+
+  let added = 0;
+  state.selectedEmps.forEach(code => {
+    const emp = EMPLOYEES.find(e => e.code === code);
+    state.records.push({
+      id: Date.now() + Math.random().toString(36).substr(2, 4),
+      date, code, name: emp ? emp.short : code, shift, stage
+    });
+    added++;
+  });
+
+  saveRecords();
+  state.selectedEmps.clear();
+  renderEmpList();
+  showToast(`Đã ghi nhận ${added} lượt chấm công!`);
+};
+
+// ================= TAB: NHẬT KÝ (JOURNAL) =================
+function renderRecords() {
+  const tbody = document.getElementById('journalTableBody');
+  const dFilter = document.getElementById('recordDateFilter').value;
+  const qFilter = normalize(document.getElementById('recordSearch').value.trim());
+
+  const filtered = state.records.filter(r => {
+    if(dFilter && r.date !== dFilter) return false;
+    if(qFilter && !(normalize(r.name).includes(qFilter) || normalize(r.code).includes(qFilter))) return false;
+    return true;
+  }).reverse();
+
+  tbody.innerHTML = filtered.map(r => `
+    <tr>
+      <td>${fmtDate(r.date)}</td>
+      <td>${r.code}</td>
+      <td>${r.name}</td>
+      <td><span style="color:${SHIFT_COLORS[r.shift]||'#000'}; font-weight:bold;">${r.shift}</span></td>
+      <td>${r.stage}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteRecord('${r.id}')">Xóa</button></td>
+    </tr>
+  `).join('');
+}
+
+function deleteRecord(id) {
+  state.records = state.records.filter(r => r.id !== id);
+  saveRecords();
+  renderRecords();
+  showToast('Đã xóa dòng chấm công');
+}
+
+function clearJournalFilters() {
+  document.getElementById('recordDateFilter').value = '';
+  document.getElementById('recordSearch').value = '';
+  renderRecords();
+}
+
+document.getElementById('recordDateFilter').addEventListener('change', renderRecords);
+document.getElementById('recordSearch').addEventListener('input', renderRecords);
+
+// ================= TAB: THỐNG KÊ & CÔNG ĐOẠN =================
+function renderStats() {
+  const container = document.getElementById('stageChips');
+  container.innerHTML = state.customStages.map(stg => 
+    `<div class="chip ${stg === state.currentStage ? 'selected' : ''}" onclick="selectStage('${stg}')">${stg}</div>`
+  ).join('');
+}
+
+function selectStage(stg) {
+  state.currentStage = stg;
+  renderStats();
+  renderCurrentStage();
+  showToast(`Đã chuyển sang ${stg}`);
+}
+
+document.getElementById('rosterSearch').addEventListener('input', renderAnalytics);
+
+function renderAnalytics() {
+  renderStats();
+  const arr = state.records;
+  const personQ = normalize(document.getElementById('rosterSearch').value.trim());
+
+  // Bảng chấm công 162 người trong tab Thống kê
+  const rosterBody = document.getElementById('rosterTableBody');
+  rosterBody.innerHTML = '';
+  
+  EMPLOYEES.forEach((emp, i) => {
+    const empRecs = arr.filter(r => r.code === emp.code);
+    if(personQ && !empRecs.length && !(normalize(emp.short).includes(personQ)||normalize(emp.full).includes(personQ)||normalize(emp.code).includes(personQ))) {
+      return;
+    }
+    
+    // Đếm số ca
+    const counts = {};
+    empRecs.forEach(r => { counts[r.shift] = (counts[r.shift] || 0) + 1; });
+    const total = empRecs.length;
+
+    let barsHtml = '';
+    if(total > 0) {
+      barsHtml = '<div style="display:flex; height:12px; border-radius:6px; overflow:hidden; background:#e2e8f0;">';
+      SHIFT_LIST_ALL.forEach(s => {
+        const c = counts[s] || 0;
+        if(c > 0) {
+          const pct = (c / total) * 100;
+          barsHtml += `<span style="width:${pct}%;background:${SHIFT_COLORS[s]};" title="${s}: ${c} lượt"></span>`;
+        }
+      });
+      barsHtml += '</div>';
+    } else {
+      barsHtml = '<span style="color:var(--muted);">—</span>';
+    }
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td><b>${emp.short}</b> <small style="color:var(--muted);">${emp.code}</small></td>
+      <td>${barsHtml}</td>
+      <td style="font-weight:bold; cursor:pointer;" class="roster-total" title="Bấm để lọc nhật ký người này">${total}</td>
+    `;
+    tr.querySelector('.roster-total').onclick = () => {
+      switchTab('journal');
+      document.getElementById('recordSearch').value = emp.code;
+      renderRecords();
+    };
+    rosterBody.appendChild(tr);
+  });
+}
+
+// ================= TỔNG QUAN 162 NGƯỜI (TAB OVERVIEW) =================
+function initOverviewMonth() {
+  if(!state.ovYear || !state.ovMonth) {
+    const d = new Date();
+    state.ovYear = d.getFullYear();
+    state.ovMonth = d.getMonth() + 1;
+  }
+}
+
+document.getElementById('ovPrevMonth').onclick = () => {
+  initOverviewMonth();
+  state.ovMonth--;
+  if(state.ovMonth < 1) { state.ovMonth = 12; state.ovYear--; }
+  renderOverview();
+};
+document.getElementById('ovNextMonth').onclick = () => {
+  initOverviewMonth();
+  state.ovMonth++;
+  if(state.ovMonth > 12) { state.ovMonth = 1; state.ovYear++; }
+  renderOverview();
+};
+document.getElementById('ovTodayBtn').onclick = () => {
+  const d = new Date();
+  state.ovYear = d.getFullYear();
+  state.ovMonth = d.getMonth() + 1;
+  renderOverview();
+};
+document.getElementById('ovSearch').addEventListener('input', renderOverview);
+document.getElementById('ovFilterMode').addEventListener('change', renderOverview);
+
+document.getElementById('overviewLegend').innerHTML = SHIFT_LIST_ALL.map(s => 
+  `<span style="display:inline-flex; align-items:center; gap:4px; margin-right:8px;"><i style="display:inline-block; width:10px; height:10px; border-radius:2px; background:${SHIFT_COLORS[s]}"></i>${s} (${SHIFT_ABBR[s]})</span>`
+).join('');
+
+function renderOverview() {
+  initOverviewMonth();
+  const y = state.ovYear;
+  const m = state.ovMonth;
+  const totalDays = daysInMonth(y, m);
+  
+  document.getElementById('ovMonthLabel').textContent = `Tháng ${m}/${y}`;
+
+  const headRow = document.getElementById('overviewHeadRow');
+  let headHtml = `<th class="ov-name-col">Nhân sự (162)</th>`;
+  for(let d=1; d<=totalDays; d++) {
+    const dateObj = new Date(y, m-1, d);
+    const dayOfWeek = (dateObj.getDay() + 6) % 7; // 0=T2, 6=CN
+    const isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
+    headHtml += `<th style="${isWeekend?'background:#eceae0;':''} text-align:center;">${d}<br><span style="font-weight:400;font-size:8.5px;">${['T2','T3','T4','T5','T6','T7','CN'][dayOfWeek]}</span></th>`;
+  }
+  headHtml += `<th class="ov-summary">Tổng</th><th class="ov-summary leave">Nghỉ</th>`;
+  headRow.innerHTML = headHtml;
+
+  const monthStartIso = isoOf(y, m-1, 1);
+  const monthEndIso = isoOf(y, m-1, totalDays);
+  const monthRecs = state.records.filter(r => r.date >= monthStartIso && r.date <= monthEndIso);
+
+  const q = normalize(document.getElementById('ovSearch').value.trim());
+  const filterMode = document.getElementById('ovFilterMode').value;
+
+  const body = document.getElementById('overviewBody');
+  body.innerHTML = '';
+
+  let activePeopleCount = 0;
+  let totalShiftsMonth = 0;
+  let totalLeaveCount = 0;
+
+  EMPLOYEES.forEach((emp) => {
+    const empRecs = monthRecs.filter(r => r.code === emp.code);
+    const leaveRecs = empRecs.filter(r => r.shift === LEAVE_SHIFT);
+    const workRecs = empRecs.filter(r => r.shift !== LEAVE_SHIFT);
+
+    if(q && !(normalize(emp.short).includes(q) || normalize(emp.full).includes(q) || normalize(emp.code).includes(q))) {
+      return;
+    }
+
+    if(filterMode === 'onleave' && leaveRecs.length === 0) return;
+    if(filterMode === 'noentry' && empRecs.length > 0) return;
+
+    if(workRecs.length > 0) activePeopleCount++;
+    totalShiftsMonth += workRecs.length;
+    totalLeaveCount += leaveRecs.length;
+
+    const tr = document.createElement('tr');
+    if(empRecs.length === 0) tr.style.opacity = '0.6';
+
+    let rowHtml = `<td class="ov-name-col"><b>${emp.short}</b><br><small style="color:var(--muted);">${emp.code}</small></td>`;
+
+    for(let d=1; d<=totalDays; d++) {
+      const dayIso = isoOf(y, m-1, d);
+      const dateObj = new Date(y, m-1, d);
+      const dayOfWeek = (dateObj.getDay() + 6) % 7;
+      const isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
+
+      const dayRecs = empRecs.filter(r => r.date === dayIso);
+
+      if(dayRecs.length === 0) {
+        rowHtml += `<td class="ov-cell ${isWeekend?'weekend':''}"></td>`;
+      } else {
+        const primaryShift = dayRecs[0].shift;
+        const bg = SHIFT_BG[primaryShift] || '#e8e6dd';
+        const color = SHIFT_COLORS[primaryShift] || '#211f1c';
+        const abbr = shiftAbbrev(primaryShift) + (dayRecs.length > 1 ? '+' : '');
+        const title = dayRecs.map(r => `${r.shift} — ${r.stage}`).join('\n');
+        rowHtml += `<td class="ov-cell" style="background:${bg};color:${color};" title="${title}" data-iso="${dayIso}" data-code="${emp.code}">${abbr}</td>`;
+      }
+    }
+
+    rowHtml += `<td class="ov-summary">${workRecs.length}</td>`;
+    rowHtml += `<td class="ov-summary leave" style="color:var(--danger);">${leaveRecs.length || ''}</td>`;
+
+    tr.innerHTML = rowHtml;
+
+    tr.querySelectorAll('td.ov-cell[data-iso]').forEach(cell => {
+      cell.onclick = () => {
+        const iso = cell.dataset.iso;
+        const code = cell.dataset.code;
+        switchTab('journal');
+        document.getElementById('recordDateFilter').value = iso;
+        document.getElementById('recordSearch').value = code;
+        renderRecords();
+      };
+    });
+
+    body.appendChild(tr);
+  });
+
+  document.getElementById('overviewSummary').innerHTML = `
+    <div class="mini-stat"><span>Tổng lượt đi làm</span><b>${totalShiftsMonth}</b></div>
+    <div class="mini-stat"><span>Người có đi làm</span><b>${activePeopleCount} / 162</b></div>
+    <div class="mini-stat"><span>Tổng lượt nghỉ/ốm</span><b>${totalLeaveCount}</b></div>
+    <div class="mini-stat"><span>Trung bình công/người</span><b>${activePeopleCount ? (totalShiftsMonth/activePeopleCount).toFixed(1) : 0}</b></div>
+  `;
+}
+
+// ================= TAB: ẢNH KẾ HOẠCH (DAY 1..7) =================
+function renderDayTabs() {
+  const wrap = document.getElementById('dayTabs');
+  let html = '';
+  for(let i=1; i<=7; i++) {
+    const hasImg = !!state.dayImages[i];
+    html += `<div class="chip ${i===state.activeDay?'selected':''}" onclick="selectDayPhoto(${i})">Ngày ${i}${hasImg?' 📷':''}</div>`;
+  }
+  wrap.innerHTML = html;
+}
+
+function selectDayPhoto(i) {
+  state.activeDay = i;
+  state.currentZoom = 100;
+  state.panX = 0; state.panY = 0;
+  renderDayTabs();
+  updateImageViewer();
+}
+
+function updateImageViewer() {
+  renderDayTabs();
+  const img = document.getElementById('activeDayImage');
+  const src = state.dayImages[state.activeDay];
+  if(src) {
+    img.src = src;
+    img.style.display = 'block';
+  } else {
+    img.removeAttribute('src');
+    img.style.display = 'none';
+  }
+  applyImageTransform();
+}
+
+function applyImageTransform() {
+  const container = document.getElementById('imgContainer');
+  container.style.transform = `scale(${state.currentZoom / 100})`;
+  document.getElementById('zoomVal').textContent = `${Math.round(state.currentZoom)}%`;
+}
+
+document.getElementById('btnZoomIn').onclick = () => { state.currentZoom = Math.min(300, state.currentZoom + 25); applyImageTransform(); };
+document.getElementById('btnZoomOut').onclick = () => { state.currentZoom = Math.max(25, state.currentZoom - 25); applyImageTransform(); };
+document.getElementById('btnZoomReset').onclick = () => { state.currentZoom = 100; applyImageTransform(); };
+
+document.getElementById('imgUploadInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    state.dayImages[state.activeDay] = evt.target.result;
+    saveImages();
+    updateImageViewer();
+    showToast(`Đã tải ảnh cho Ngày ${state.activeDay}`);
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+});
+
+document.getElementById('btnDeleteImg').onclick = async () => {
+  if(!state.dayImages[state.activeDay]) { showToast('Ngày này chưa có ảnh'); return; }
+  if(await customConfirm(`Xóa ảnh của Ngày ${state.activeDay}?`)) {
+    delete state.dayImages[state.activeDay];
+    saveImages();
+    updateImageViewer();
+    showToast(`Đã xóa ảnh Ngày ${state.activeDay}`);
+  }
+};
+
+// ================= SAO LƯU & PHỤC HỒI =================
+document.getElementById('btnBackup').onclick = () => {
+  const data = {
+    version: 'V2',
+    exportDate: new Date().toISOString(),
+    records: state.records,
+    customStages: state.customStages,
+    dayImages: state.dayImages
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `cham-cong-backup-${todayISO()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Đã tải xuống file sao lưu');
+};
+
+const restoreFileInput = document.getElementById('restoreFileInput');
+document.getElementById('btnRestore').onclick = () => restoreFileInput.click();
+restoreFileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async (evt) => {
+    try {
+      const data = JSON.parse(evt.target.result);
+      if(!Array.isArray(data.records)) throw new Error('Cấu trúc file không hợp lệ');
+      if(await customConfirm(`Phục hồi dữ liệu từ file (${data.records.length} lượt chấm công)? Dữ liệu hiện tại sẽ bị ghi đè.`)) {
+        state.records = data.records || [];
+        state.customStages = data.customStages || [];
+        state.dayImages = data.dayImages || {};
+        saveRecords(); saveStages(); saveImages();
+        renderStats(); renderShiftChips(); renderEmpList();
+        if(state.activeTab === 'journal') renderRecords();
+        if(state.activeTab === 'stats') renderAnalytics();
+        if(state.activeTab === 'overview') renderOverview();
+        if(state.activeTab === 'photos') updateImageViewer();
+        showToast('Phục hồi dữ liệu thành công!');
+      }
+    } catch(err) {
+      customAlert('Lỗi đọc file phục hồi: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// KHỞI TẠO ỨNG DỤNG
+window.addEventListener('error', (e) => {
+  const banner = document.getElementById('fatalErrorBanner');
+  const msg = document.getElementById('fatalErrorMsg');
+  if(banner && msg) {
+    msg.textContent = `${e.message}`;
+    banner.style.display = 'block';
+  }
+});
+
+function initApp() {
+  loadState();
+  
+  const today = todayISO();
+  document.getElementById('workDateHidden').value = today;
+  updateTopDateChip();
+
+  renderStats();
+  renderShiftChips();
+  renderEmpList();
+  renderCurrentStage();
+  renderDayTabs();
+}
+
+initApp();
+</script>
+</body>
+</html>
